@@ -1,42 +1,306 @@
-colorFunction[x_] := GrayLevel[(0.65)*(x/(k/5))];
+(*---1) Physical/Model Constants---*)
+k = 0.5664; (*K1=k,ignoring higher-order terms (K2)*)
+xi = 9;
+muB = 0.057883818060;
+mu = 4075.90672005*muB;
+ga = 176.085963023;
+al = 0.1;
+tau0 = mu/(2*ga*k);
+
+(*---2) Define the Cubic Anisotropy Energy (Ignoring K2)---*)
+Ecubic[\[Theta]_, \[CurlyPhi]_] := 
+  Module[{sx, sy, sz}, sx = Sin[\[Theta]] Cos[\[CurlyPhi]];
+   sy = Sin[\[Theta]] Sin[\[CurlyPhi]];
+   sz = Cos[\[Theta]];
+   k (sx^2 sy^2 + sy^2 sz^2 + sz^2 sx^2)];
+
+(*---3) Define the Torque Field:EqTorqueCubic (already known)---*)
+dEdTheta = FullSimplify[D[Ecubic[\[Theta], \[CurlyPhi]], \[Theta]]];
+dEdPhi = FullSimplify[D[Ecubic[\[Theta], \[CurlyPhi]], \[CurlyPhi]]];
+
+EqTorqueCubic[\[Theta]_, \[CurlyPhi]_] := -{(Csc[\[Theta]] dEdPhi + 
+       al dEdTheta)/(tau0 (1 + al^2)), (al Csc[\[Theta]] dEdPhi - 
+       dEdTheta)/(tau0 (1 + al^2))};
+
+reductionFactor = 2.5;
+
+cubicPlot = 
+  VectorPlot[
+   reductionFactor*EqTorqueCubic[\[Theta], \[CurlyPhi]], {\[Theta], 0,
+     Pi}, {\[CurlyPhi], 0, 2 Pi}, 
+   VectorColorFunction -> (RGBColor[0, 0, 1, 0.5] &), 
+   VectorStyle -> Directive[RGBColor[0, 0, 1, 0.5]], 
+   VectorColorFunctionScaling -> False, VectorScaling -> "Linear", 
+   VectorPoints -> 33, VectorAspectRatio -> 0.5, Frame -> True, 
+   FrameLabel -> {Style["\[Theta] (rad)"], 
+     Style["\[CurlyPhi] (rad)"]}];
+
+
+colorFunction[x_] := GrayLevel[(0.55)*(x/(k/5))];
 
 energyContour = 
   Legended[
-    ContourPlot[
-      Ecubic[θ, ϕ], {θ, 0, Pi}, {ϕ, 0, 2 Pi},
-      ColorFunction -> colorFunction,
-      ColorFunctionScaling -> False, Contours -> 20,
-      ContourShading -> True, PlotRange -> {0, k/3},
-      Frame -> True, 
-      FrameLabel -> {"θ (rad)", "ϕ (rad)"},
-      LabelStyle -> {Black, FontFamily -> "Arial", Bold, FontSize -> 12},
-      FrameTicksStyle -> {Black, FontFamily -> "Arial", Bold, FontSize -> 12},
-      FrameTicks -> {
-        { (* vertical ticks (left/right) *)
-          {
-            {0, "0"}, 
-            {Pi/2, Row[{DisplayForm[FractionBox["1", "2"]], " \[Pi]"}]},
-            {Pi, "\[Pi]"},
-            {3 Pi/2, Row[{DisplayForm[FractionBox["3", "2"]], " \[Pi]"}]},
-            {2 Pi, "2\[Pi]"}
-          },
-          None
-        },
-        { (* horizontal ticks (bottom/top) *)
-          {
-            {0, "0"},
-            {Pi/4, Row[{DisplayForm[FractionBox["1", "4"]], " \[Pi]"}]},
-            {Pi/2, Row[{DisplayForm[FractionBox["1", "2"]], " \[Pi]"}]},
-            {3 Pi/4, Row[{DisplayForm[FractionBox["3", "4"]], " \[Pi]"}]},
-            {Pi, "\[Pi]"}
-          },
-          None
-        }
-      }
-    ],
-    Placed[
-      BarLegend[{colorFunction, {0, k/3}},
-        LegendLabel -> Style["Energy", {Black, FontFamily -> "Arial", Bold, FontSize -> 12}],
-        LegendLayout -> "Row"],
-      Bottom]
-  ];
+   ContourPlot[
+    Ecubic[\[Theta], \[Phi]], {\[Theta], 0, Pi}, {\[Phi], 0, 2 Pi}, 
+    ColorFunction -> colorFunction, ColorFunctionScaling -> False, 
+    Contours -> 20, ContourShading -> True, PlotRange -> {0, k/3}, 
+    Frame -> True, FrameLabel -> {"\[Theta] [rad]", "\[Phi] [rad]"}, 
+    LabelStyle -> {Black, FontFamily -> "Arial", Bold, 
+      FontSize -> 22}, 
+    FrameTicksStyle -> {Black, FontFamily -> "Arial", Bold, 
+      FontSize -> 22}, 
+    FrameTicks -> {{(*vertical ticks (left/
+       right)*){{0, "0"}, {Pi/2, 
+         Row[{DisplayForm[FractionBox["1", "2"]], " \[Pi]"}]}, {Pi, 
+         "\[Pi]"}, {3 Pi/2, 
+         Row[{DisplayForm[FractionBox["3", "2"]], " \[Pi]"}]}, {2 Pi, 
+         "2\[Pi]"}}, None}, {(*horizontal ticks (bottom/
+       top)*){{0, "0"}, {Pi/4, 
+         Row[{DisplayForm[FractionBox["1", "4"]], " \[Pi]"}]}, {Pi/2, 
+         Row[{DisplayForm[FractionBox["1", "2"]], " \[Pi]"}]}, {3 Pi/
+           4, Row[{DisplayForm[FractionBox["3", "4"]], 
+           " \[Pi]"}]}, {Pi, "\[Pi]"}}, None}}], 
+   Placed[BarLegend[{colorFunction, {0, k/3}}, 
+     LegendLabel -> 
+      Style["Energy [meV]", {Black, FontFamily -> "Arial", Bold, 
+        FontSize -> 22}], LegendLayout -> "Row"], Bottom]];
+
+
+
+
+
+
+
+
+
+
+(*---6) Import/Convert Your Paths to (\[Theta],\[CurlyPhi])---*)
+filePath1 = "C:\\Users\\abhin\\Desktop\\FePt\\I-II\\3.0d0\\Path_P.out";
+filePath2 = 
+  "C:\\Users\\abhin\\Desktop\\FePt\\I-III\\3.0d0\\Path_P.out";
+filePath3 = 
+  "C:\\Users\\abhin\\Desktop\\FePt\\II-III\\3.0d0\\Path_P.out";
+filePath4 = "C:\\Users\\abhin\\Desktop\\FePt\\MEP_I-II\\PathG.out";
+filePath5 = "C:\\Users\\abhin\\Desktop\\FePt\\MEP_II-III\\PathG.out";
+
+data1 = Import[filePath1, "Table"][[3 ;;]];
+data2 = Import[filePath2, "Table"][[3 ;;]];
+data3 = Import[filePath3, "Table"][[3 ;;]];
+data4 = Import[filePath4, "Table"][[3 ;;]];
+data5 = Import[filePath5, "Table"][[3 ;;]];
+
+sph1 = ToSphericalCoordinates /@ data1[[All, 4 ;; 6]];
+sph2 = ToSphericalCoordinates /@ data2[[All, 4 ;; 6]];
+sph3 = ToSphericalCoordinates /@ data3[[All, 4 ;; 6]];
+sph4 = ToSphericalCoordinates /@ data4[[All, 4 ;; 6]];
+sph5 = ToSphericalCoordinates /@ data5[[All, 4 ;; 6]];
+
+\[Theta]1 = sph1[[All, 2]];
+\[CurlyPhi]1 = Mod[sph1[[All, 3]], 2 Pi];
+\[Theta]2 = sph2[[All, 2]];
+\[CurlyPhi]2 = Mod[sph2[[All, 3]], 2 Pi];
+\[Theta]3 = sph3[[All, 2]];
+\[CurlyPhi]3 = Mod[sph3[[All, 3]], 2 Pi];
+\[Theta]4 = sph4[[All, 2]];
+\[CurlyPhi]4 = Mod[sph4[[All, 3]], 2 Pi];
+\[Theta]5 = sph5[[All, 2]];
+\[CurlyPhi]5 = Mod[sph5[[All, 3]], 2 Pi];
+
+fractionList = {1/6, 1/3, 1/2, 2/3, 5/6};
+
+indices1 = Round[Length[\[Theta]1]*fractionList];
+indices2 = Round[Length[\[Theta]2]*fractionList];
+indices3 = Round[Length[\[Theta]3]*fractionList];
+
+(*Adjust indices to ensure they do not exceed velcartz lengths*)
+indices1 = Map[Min[#, Length[velcartz1]] &, indices1];
+indices2 = Map[Min[#, Length[velcartz2]] &, indices2];
+indices3 = Map[Min[#, Length[velcartz3]] &, indices3];
+
+(*Diagnostic Prints to Verify Lengths*)
+Print["Length of \[Theta]1: ", Length[\[Theta]1]];
+Print["Length of velcartz1: ", Length[velcartz1]];
+Print["Length of \[Theta]2: ", Length[\[Theta]2]];
+Print["Length of velcartz2: ", Length[velcartz2]];
+Print["Length of \[Theta]3: ", Length[\[Theta]3]];
+Print["Length of velcartz3: ", Length[velcartz3]];
+
+Print["Adjusted indices1: ", indices1];
+Print["Adjusted indices2: ", indices2];
+Print["Adjusted indices3: ", indices3];
+
+(*---9) Create Path Graphics without the MEP (dashed) paths---*)
+pathGraphics = 
+  Graphics[{(*First path:
+    solid red line*){RGBColor[0.9, 0.31, 0.67], AbsoluteThickness[5], 
+     Line[Transpose[{\[Theta]1, \[CurlyPhi]1}]]},(*Third path:
+    solid green line*){Green, AbsoluteThickness[5], 
+     Line[Transpose[{\[Theta]3, \[CurlyPhi]3}]]},(*Fifth path:
+    solid orange line*){Orange, AbsoluteThickness[5], 
+     Line[Transpose[{\[Theta]2, \[CurlyPhi]2}]]}}];
+
+
+
+(*---8) Create Velocity Arrows Without Tails---*)(*Velocity Arrows \
+for OCP #1 (I-II)*)
+velArrows1 = 
+  Table[{Arrowheads[
+     velmagnitude1[i]/velmagnScaling1],(*Scale arrowhead size*)
+    Arrow[{{\[Theta]1[[i]] + 
+        velsphercaltheta1[\[Theta]1[[i]], \[CurlyPhi]1[[i]], i]*
+         velvectorScaling1*0.8, \[CurlyPhi]1[[i]] + 
+        velsphercalphi1[\[Theta]1[[i]], \[CurlyPhi]1[[i]], i]*
+         velvectorScaling1*0.8}, {\[Theta]1[[i]] + 
+        velsphercaltheta1[\[Theta]1[[i]], \[CurlyPhi]1[[i]], i]*
+         velvectorScaling1, \[CurlyPhi]1[[i]] + 
+        velsphercalphi1[\[Theta]1[[i]], \[CurlyPhi]1[[i]], i]*
+         velvectorScaling1}}]}, {i, indices1}];
+
+(*Velocity Arrows for OCP #2 (I-III)*)
+velArrows2 = 
+  Table[{Arrowheads[
+     velmagnitude2[i]/velmagnScaling2],(*Scale arrowhead size*)
+    Arrow[{{\[Theta]2[[i]] + 
+        velsphercaltheta2[\[Theta]2[[i]], \[CurlyPhi]2[[i]], i]*
+         velvectorScaling2*0.8, \[CurlyPhi]2[[i]] + 
+        velsphercalphi2[\[Theta]2[[i]], \[CurlyPhi]2[[i]], i]*
+         velvectorScaling2*0.8}, {\[Theta]2[[i]] + 
+        velsphercaltheta2[\[Theta]2[[i]], \[CurlyPhi]2[[i]], i]*
+         velvectorScaling2, \[CurlyPhi]2[[i]] + 
+        velsphercalphi2[\[Theta]2[[i]], \[CurlyPhi]2[[i]], i]*
+         velvectorScaling2}}]}, {i, indices2}];
+
+(*Velocity Arrows for OCP #3 (II-III)*)
+velArrows3 = 
+  Table[{Arrowheads[
+     velmagnitude3[i]/velmagnScaling3],(*Scale arrowhead size*)
+    Arrow[{{\[Theta]3[[i]] + 
+        velsphercaltheta3[\[Theta]3[[i]], \[CurlyPhi]3[[i]], i]*
+         velvectorScaling3*0.8, \[CurlyPhi]3[[i]] + 
+        velsphercalphi3[\[Theta]3[[i]], \[CurlyPhi]3[[i]], i]*
+         velvectorScaling3*0.8}, {\[Theta]3[[i]] + 
+        velsphercaltheta3[\[Theta]3[[i]], \[CurlyPhi]3[[i]], i]*
+         velvectorScaling3, \[CurlyPhi]3[[i]] + 
+        velsphercalphi3[\[Theta]3[[i]], \[CurlyPhi]3[[i]], i]*
+         velvectorScaling3}}]}, {i, indices3}];
+
+(*----7) Velocity Import and Calculations (Modified)----*)
+
+(*----Calculation for OCP #1 (I-II)-----*)
+velvectorScaling1 = 0.1; (*Increased scaling for larger arrows*)
+velmagnScaling1 = 
+  20;    (*Decreased scaling for more apparent arrowhead sizing*)
+velcartz1 = 
+  Drop[Import[
+    "C:\\Users\\abhin\\Desktop\\FePt\\I-II\\3.0d0\\velocity.out", 
+    "Table"], 
+   2]; (*Import velocity data for OCP #1 and drop the first two lines*)
+
+(*Define velocity magnitude for OCP #1*)
+velmagnitude1[i_] := 
+  Sqrt[velcartz1[[i, 4]]^2 + velcartz1[[i, 5]]^2 + 
+    velcartz1[[i, 6]]^2];
+
+(*Define spherical components for OCP #1*)
+velsphercaltheta1[\[Theta]_, \[CurlyPhi]_, i_] := 
+  Cos[\[Theta]] Cos[\[CurlyPhi]] velcartz1[[i, 4]] + 
+   Cos[\[Theta]] Sin[\[CurlyPhi]] velcartz1[[i, 5]] - 
+   Sin[\[Theta]] velcartz1[[i, 6]];
+velsphercalphi1[\[Theta]_, \[CurlyPhi]_, 
+   i_] := -Sin[\[CurlyPhi]] velcartz1[[i, 4]] + 
+   Cos[\[CurlyPhi]] velcartz1[[i, 5]];
+
+(*----Calculation for OCP #2 (I-III)-----*)
+velvectorScaling2 = 0.1; (*Increased scaling for larger arrows*)
+velmagnScaling2 = 
+  20;    (*Decreased scaling for more apparent arrowhead sizing*)
+velcartz2 = 
+  Drop[Import[
+    "C:\\Users\\abhin\\Desktop\\FePt\\I-III\\3.0d0\\velocity.out", 
+    "Table"], 
+   2]; (*Import velocity data for OCP #2 and drop the first two lines*)
+
+(*Define velocity magnitude for OCP #2*)
+velmagnitude2[i_] := 
+  Sqrt[velcartz2[[i, 4]]^2 + velcartz2[[i, 5]]^2 + 
+    velcartz2[[i, 6]]^2];
+
+(*Define spherical components for OCP #2*)
+velsphercaltheta2[\[Theta]_, \[CurlyPhi]_, i_] := 
+  Cos[\[Theta]] Cos[\[CurlyPhi]] velcartz2[[i, 4]] + 
+   Cos[\[Theta]] Sin[\[CurlyPhi]] velcartz2[[i, 5]] - 
+   Sin[\[Theta]] velcartz2[[i, 6]];
+velsphercalphi2[\[Theta]_, \[CurlyPhi]_, 
+   i_] := -Sin[\[CurlyPhi]] velcartz2[[i, 4]] + 
+   Cos[\[CurlyPhi]] velcartz2[[i, 5]];
+
+(*----Calculation for OCP #3 (II-III)-----*)
+velvectorScaling3 = 0.1; (*Increased scaling for larger arrows*)
+velmagnScaling3 = 
+  20;    (*Decreased scaling for more apparent arrowhead sizing*)
+velcartz3 = 
+  Drop[Import[
+    "C:\\Users\\abhin\\Desktop\\FePt\\II-III\\3.0d0\\velocity.out", 
+    "Table"], 
+   2]; (*Import velocity data for OCP #3 and drop the first two lines*)
+
+(*Define velocity magnitude for OCP #3*)
+velmagnitude3[i_] := 
+  Sqrt[velcartz3[[i, 4]]^2 + velcartz3[[i, 5]]^2 + 
+    velcartz3[[i, 6]]^2];
+
+(*Define spherical components for OCP #3*)
+velsphercaltheta3[\[Theta]_, \[CurlyPhi]_, i_] := 
+  Cos[\[Theta]] Cos[\[CurlyPhi]] velcartz3[[i, 4]] + 
+   Cos[\[Theta]] Sin[\[CurlyPhi]] velcartz3[[i, 5]] - 
+   Sin[\[Theta]] velcartz3[[i, 6]];
+velsphercalphi3[\[Theta]_, \[CurlyPhi]_, 
+   i_] := -Sin[\[CurlyPhi]] velcartz3[[i, 4]] + 
+   Cos[\[CurlyPhi]] velcartz3[[i, 5]];
+
+(*---10) Create Velocity Graphics---*)
+velGraphics1 = Graphics[{Purple, velArrows1}];
+velGraphics2 = Graphics[{Red, velArrows2}];
+velGraphics3 = Graphics[{Darker[Green, 0.6], velArrows3}];
+
+(*---11) Combine All Graphics and Export---*)
+combinedPlot = 
+  Show[energyContour,(*Background energy contour*)
+   cubicPlot,(*Torque vector field*)pathGraphics,(*Overlayed paths*)
+   velGraphics1,(*Velocity vectors for OCP #1*)
+   velGraphics2,(*Velocity vectors for OCP #2*)velGraphics3, 
+   PlotRange -> All, PlotLabel -> ""];
+
+(*Display the combined plot*)
+combinedPlot
+
+(*---13) Output Tables with Raw Velocity Values for Each \
+OCP---*)(*Function to create velocity tables*)
+createVelocityTable[velcartz_, indices_, velmagnitudeFunc_, 
+   ocpNumber_] := 
+  Module[{selectedIndices, velocities, magnitudes, tableData}, 
+   selectedIndices = indices;
+   velocities = velcartz[[selectedIndices, 4 ;; 6]];
+   magnitudes = velmagnitudeFunc /@ selectedIndices;
+   tableData = 
+    Table[{selectedIndices[[i]], 
+      NumberForm[velcartz[[selectedIndices[[i]], 4]], {5, 3}], 
+      NumberForm[velcartz[[selectedIndices[[i]], 5]], {5, 3}], 
+      NumberForm[velcartz[[selectedIndices[[i]], 6]], {5, 3}], 
+      NumberForm[magnitudes[[i]], {5, 3}]}, {i, 
+      Length[selectedIndices]}];
+   Grid[Prepend[
+     tableData, {"Index", "v_x", "v_y", "v_z", "Magnitude"}], 
+    Frame -> All, Background -> {None, {LightYellow}}]];
+
+(*Create and Display Tables for Each OCP*)
+Print["Velocity Values for OCP #1 (I-II):"];
+createVelocityTable[velcartz1, indices1, velmagnitude1, 1]
+
+Print["\nVelocity Values for OCP #2 (I-III):"];
+createVelocityTable[velcartz2, indices2, velmagnitude2, 2]
+
+Print["\nVelocity Values for OCP #3 (II-III):"];
+createVelocityTable[velcartz3, indices3, velmagnitude3, 3]
+
+Export[output . png, combinedPlot]
